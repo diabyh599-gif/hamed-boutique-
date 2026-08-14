@@ -1,0 +1,317 @@
+let discount = 0;
+
+let cart = JSON.parse(
+localStorage.getItem("cart")
+) || [];
+
+function saveCart(){
+
+localStorage.setItem(
+"cart",
+JSON.stringify(cart)
+);
+
+localStorage.setItem(
+"products",
+JSON.stringify(products)
+);
+
+}
+
+function addToCart(productId){
+
+const product =
+products.find(
+p => p.id === productId
+);
+
+if(!product){
+return;
+}
+
+if(product.stock <= 0){
+
+alert("Produit épuisé");
+
+return;
+
+}
+
+product.stock--;
+product.sales++;
+
+cart.push(product);
+
+saveCart();
+
+updateCart();
+
+displayProducts();
+
+updateStats();
+
+}
+
+function removeFromCart(index){
+
+const product =
+cart[index];
+
+if(product){
+
+product.stock++;
+
+}
+
+cart.splice(index,1);
+
+saveCart();
+
+updateCart();
+
+displayProducts();
+
+updateStats();
+
+}
+
+function updateCart(){
+
+const cartItems =
+document.getElementById("cart-items");
+
+const cartCount =
+document.getElementById("cart-count");
+
+const cartTotal =
+document.getElementById("cart-total");
+
+let html = "";
+
+let total = 0;
+
+cart.forEach((item,index)=>{
+
+total += item.price;
+
+html += `
+<div class="cart-item">
+
+<img
+src="${item.images[0]}"
+width="60"
+height="60"
+style="border-radius:10px;">
+
+<p>
+${item.name}
+<br>
+${item.price.toLocaleString()} FCFA
+</p>
+
+<div>
+
+<button onclick="removeFromCart(${index})">
+➖
+</button>
+
+<span>1</span>
+
+<button onclick="addToCart(${item.id})">
+➕
+</button>
+
+</div>
+
+</div>
+`;
+
+});
+
+if(cartItems){
+cartItems.innerHTML = html;
+}
+
+if(cartCount){
+cartCount.textContent = cart.length;
+}
+
+const finalPrice =
+total - (total * discount / 100);
+
+if(cartTotal){
+cartTotal.textContent =
+finalPrice.toLocaleString();
+}
+
+}
+
+function orderWhatsApp(){
+
+const customerName =
+document.getElementById("customer-name").value;
+
+const customerPhone =
+document.getElementById("customer-phone").value;
+
+const customerAddress =
+document.getElementById("customer-address").value;
+
+if(
+!customerName ||
+!customerPhone ||
+!customerAddress
+){
+
+alert("Remplissez vos informations");
+return;
+
+}
+
+if(cart.length === 0){
+
+alert("Panier vide");
+return;
+
+}
+
+let total = 0;
+
+let message =
+"🛍️ Nouvelle commande WebProfit AI%0A%0A";
+
+message +=
+"👤 Client : " +
+customerName +
+"%0A";
+
+message +=
+"📞 Téléphone : " +
+customerPhone +
+"%0A";
+
+message +=
+"📍 Adresse : " +
+customerAddress +
+"%0A%0A";
+
+cart.forEach(item => {
+
+message +=
+item.name +
+" - " +
+item.price +
+" FCFA%0A";
+
+total += item.price;
+
+});
+
+message +=
+"%0A💰 Total : " +
+total +
+" FCFA";
+
+let orders =
+JSON.parse(
+localStorage.getItem("orders")
+) || [];
+
+orders.push({
+
+id: Date.now(),
+date: new Date().toLocaleString(),
+customerName,
+customerPhone,
+customerAddress,
+items: cart,
+total
+
+});
+
+localStorage.setItem(
+"orders",
+JSON.stringify(orders)
+);
+
+window.open(
+"https://wa.me/2250719949973?text=" +
+encodeURIComponent(
+decodeURIComponent(message)
+),
+"_blank"
+);
+
+const tracking =
+document.getElementById(
+"tracking-status"
+);
+
+if(tracking){
+
+tracking.innerHTML =
+"🟡 Commande reçue";
+
+setTimeout(()=>{
+tracking.innerHTML =
+"🔵 Préparation";
+},3000);
+
+setTimeout(()=>{
+tracking.innerHTML =
+"🟣 Expédiée";
+},6000);
+
+setTimeout(()=>{
+tracking.innerHTML =
+"🟢 Livrée";
+},9000);
+
+}
+
+alert("Commande enregistrée !");
+
+}
+
+function applyPromo(){
+
+const code =
+document.getElementById(
+"promo-code"
+).value.toUpperCase();
+
+const message =
+document.getElementById(
+"promo-message"
+);
+
+if(code === "BIENVENUE10"){
+
+discount = 10;
+
+message.innerHTML =
+"✅ Réduction de 10% appliquée";
+
+}
+else if(code === "FETE20"){
+
+discount = 20;
+
+message.innerHTML =
+"✅ Réduction de 20% appliquée";
+
+}
+else{
+
+discount = 0;
+
+message.innerHTML =
+"❌ Code invalide";
+
+}
+
+updateCart();
+
+}
+
+updateCart();
